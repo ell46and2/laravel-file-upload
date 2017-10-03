@@ -2,8 +2,8 @@
 
 return [
     // Allowed file types with . prefix
-    'allowed' => '.pdf,.doc,.xls,.docx,.xlsx,.jpg,.png,.gif,.jpeg',
+    'allowed' => ".jpeg,.jpg,.png,.gif",
 
     // Max file size in KB
-    'max_size' => 5000
+    'max_size' => 10000
 ];
