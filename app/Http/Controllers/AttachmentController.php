@@ -42,7 +42,19 @@ class AttachmentController extends Controller
         ]);
 
         // save the file
-        if ( $fileUid = $request->file->store('/upload', 'public') ) {
+        // if ( $fileUid = $request->file->store('/upload', 'public') ) {
+        //     return Attachment::create([
+        //         'filename' => $request->file->getClientOriginalName(),
+        //         'uid' => $fileUid,
+        //         'size' => $request->file->getClientSize(),
+        //         'mime' => $request->file->getMimeType(),
+        //         'attachable_id' => $request->get('attachable_id'),
+        //         'attachable_type' => $request->get('attachable_type'),
+        //     ]);
+        // }
+
+        // save the file to s3
+        if ( $fileUid = $request->file->store('avatars', 's3') ) {
             return Attachment::create([
                 'filename' => $request->file->getClientOriginalName(),
                 'uid' => $fileUid,

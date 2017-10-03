@@ -18,6 +18,7 @@ class Attachment extends Model
 
     public function getUrlAttribute()
     {
+    	return "https://s3.eu-west-2.amazonaws.com/file-uploading-laravel/$this->uid";
         return Storage::url($this->uid);
     }
 
@@ -27,7 +28,7 @@ class Attachment extends Model
 
         static::deleting(function($attachment){
             // delete associated file from storage
-            Storage::disk('public')->delete($attachment->uid);
+            Storage::disk('s3')->delete($attachment->uid);
         });
     }
 }

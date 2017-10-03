@@ -38,11 +38,13 @@
                         name: file.filename,
                         size: file.size,
                         type: file.mime,
-                        dataURL: file.url
+                        dataURL: file.url,
                     };
 
                     // Call the default addedfile event
                     self.emit("addedfile", uploadedFile);
+
+                    self.files.push(uploadedFile);
 
                     // Image? lets make thumbnail
                     if( file.mime.indexOf('image') !== -1) {
@@ -54,7 +56,7 @@
                             self.options.thumbnailMethod,
                             true, function(thumbnail) {
                                 self.emit('thumbnail', uploadedFile, thumbnail);
-                        });
+                        }, 'anonymous');
 
                     } else {
                         // we can get the icon for file type
@@ -63,7 +65,7 @@
 
                     // fire complete event to get rid of progress bar etc
                     self.emit("complete", uploadedFile);
-                })
+                });
 
                 @endif
 
