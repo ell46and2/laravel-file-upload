@@ -17,6 +17,7 @@
         // Attach dropzone on element
         $("#{{ $dropzoneId }}").dropzone({
             url: "{{ route('attachments.store') }}",
+            maxFiles: 2,
             addRemoveLinks: true,
             maxFilesize: {{ isset($maxFileSize) ? $maxFileSize : config('attachment.max_size', 1000) / 1000 }},
             acceptedFiles: "{!! isset($acceptedFiles) ? $acceptedFiles : config('attachment.allowed') !!}",
@@ -28,64 +29,81 @@
 
                 @if(isset($uploadedFiles) && count($uploadedFiles))
 
-                // show already uploaded files
-                uploadedFiles = {!! json_encode($uploadedFiles) !!};
-                var self = this;
+                    // show already uploaded files
+                    uploadedFiles = {!! json_encode($uploadedFiles) !!};
+                    var self = this;
 
-                uploadedFiles.forEach(function (file) {
-                    // Create a mock uploaded file:
-                    var uploadedFile = {
-                        name: file.filename,
-                        size: file.size,
-                        type: file.mime,
-                        dataURL: file.url,
-                    };
+                    uploadedFiles.forEach(function (file) {
+                        console.log(file);
+                        // Create a mock uploaded file:
+                        var uploadedFile = {
+                            name: file.filename,
+                            size: file.size,
+                            type: file.mime,
+                            dataURL: file.url,
+                        };
 
-                    // Call the default addedfile event
-                    self.emit("addedfile", uploadedFile);
+                        // Call the default addedfile event
+                        self.emit("addedfile", uploadedFile);
 
-                    self.files.push(uploadedFile);
+                        self.files.push(uploadedFile);
 
-                    // Image? lets make thumbnail
-                    if( file.mime.indexOf('image') !== -1) {
+                        // Image? lets make thumbnail
+                        if( file.mime.indexOf('image') !== -1) {
 
-                        self.createThumbnailFromUrl(
-                            uploadedFile,
-                            self.options.thumbnailWidth,
-                            self.options.thumbnailHeight,
-                            self.options.thumbnailMethod,
-                            true, function(thumbnail) {
-                                self.emit('thumbnail', uploadedFile, thumbnail);
-                        }, 'anonymous');
+                            self.createThumbnailFromUrl(
+                                uploadedFile,
+                                self.options.thumbnailWidth,
+                                self.options.thumbnailHeight,
+                                self.options.thumbnailMethod,
+                                true, function(thumbnail) {
+                                    self.emit('thumbnail', uploadedFile, thumbnail);
+                            }, 'anonymous');
 
-                    } else {
-                        // we can get the icon for file type
-                        self.emit("thumbnail", uploadedFile, getIconFromFilename(uploadedFile));
-                    }
+                        } else {
+                            // we can get the icon for file type
+                            self.emit("thumbnail", uploadedFile, getIconFromFilename(uploadedFile));
+                        }
 
-                    // fire complete event to get rid of progress bar etc
-                    self.emit("complete", uploadedFile);
-                });
+                        // fire complete event to get rid of progress bar etc
+                        self.emit("complete", uploadedFile);
+                    });
 
                 @endif
 
-                // Handle added file
-                // this.on('addedfile', function(file) {
-                //     var thumb = getIconFromFilename(file);
-                //     $(file.previewElement).find(".dz-image img").attr("src", thumb);
-                // })
+                //Handle added file
+                this.on('success', function(file) {
+                    // var thumb = getIconFromFilename(file);
+                    // $(file.previewElement).find(".dz-image img").attr("src", thumb);
+                    console.log('handling ADDED FILE');
+                    console.log(JSON.parse(file.xhr.response));
+
+                    var response = JSON.parse(file.xhr.response);
+
+                    var uploadedFile = {
+                        id: response.id,
+                        filename: response.filename,
+                        size: response.size,
+                        type: response.mime,
+                        dataURL: response.url,
+                    };
+                    uploadedFiles.push(uploadedFile);
+                    console.log(uploadedFiles);
+                })
 
                 // handle remove file to delete on server
                 this.on("removedfile", function (file) {
                     // try to find in uploadedFiles
                     var found = uploadedFiles.find(function (item) {
                         // check if filename and size matched
-                        console.log(item);
-                        return (item.filename === file.name) && (item.size === file.size);
+                        console.log(item.filename);
+                        console.log(file.filename);
+                        return (item.filename === file.name);
                     })
 
                     // If got the file lets make a delete request by id
                     if( found ) {
+                        console.log('found.id', found.id);
                         $.ajax({
                             url: "/attachments/" + found.id,
                             type: 'DELETE',

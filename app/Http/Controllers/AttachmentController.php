@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Attachment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManager;
 
 class AttachmentController extends Controller
 {
+    private $tempImagePath = 'app/avatars/';
+
     /**
      * Display a listing of the resource.
      *
@@ -41,23 +46,16 @@ class AttachmentController extends Controller
             'attachable_type' => 'required',
         ]);
 
-        // save the file
-        // if ( $fileUid = $request->file->store('/upload', 'public') ) {
-        //     return Attachment::create([
-        //         'filename' => $request->file->getClientOriginalName(),
-        //         'uid' => $fileUid,
-        //         'size' => $request->file->getClientSize(),
-        //         'mime' => $request->file->getMimeType(),
-        //         'attachable_id' => $request->get('attachable_id'),
-        //         'attachable_type' => $request->get('attachable_type'),
-        //     ]);
-        // }
 
-        // save the file to s3
-        if ( $fileUid = $request->file->store('avatars', 's3') ) {
+        // create a random string filename
+        $filename = $this->generateFilename($request->file);
+        // resize the image
+        $image = $this->resizeImage($request->file('file'), $filename);
+
+        if($this->uploadedImage($filename, $image)) {
             return Attachment::create([
                 'filename' => $request->file->getClientOriginalName(),
-                'uid' => $fileUid,
+                'uid' => "avatars/$filename",
                 'size' => $request->file->getClientSize(),
                 'mime' => $request->file->getMimeType(),
                 'attachable_id' => $request->get('attachable_id'),
@@ -121,5 +119,30 @@ class AttachmentController extends Controller
     private function getAllowedFileTypes()
     {
         return str_replace('.', '', config('attachment.allowed', ''));
+    }
+
+    private function resizeImage($image, $filename)
+    {
+        $imageManager = new ImageManager();
+
+        $resizedImage = $imageManager->make($image)->resize(600,600, function($constraint) {
+            $constraint->aspectRatio();
+        })->save(storage_path($this->tempImagePath . $filename)); 
+
+        return $resizedImage;
+    }
+
+    private function generateFilename($file)
+    {
+        return str_random(20) . '.' . $file->getClientOriginalExtension();
+    }
+
+    private function uploadedImage($filename, $image)
+    {
+        $uploaded = Storage::disk('s3')->put("avatars/$filename", $image->__toString());
+        // delete tmp image
+        File::delete(storage_path($this->tempImagePath . $filename));
+
+        return $uploaded;
     }
 }
