@@ -37,6 +37,7 @@
                         console.log(file);
                         // Create a mock uploaded file:
                         var uploadedFile = {
+                            id: file.id,
                             name: file.filename,
                             size: file.size,
                             type: file.mime,
@@ -50,6 +51,8 @@
 
                         // Image? lets make thumbnail
                         if( file.mime.indexOf('image') !== -1) {
+
+                            console.log('self.options', self.options);
 
                             self.createThumbnailFromUrl(
                                 uploadedFile,
@@ -70,6 +73,32 @@
                     });
 
                 @endif
+
+                // Add click event for 'Main' image
+                this.on("thumbnail", function(file) {
+                    // check if file is selected
+                      // if yes add 'selected' class
+
+                    console.log(file); // will send to console all available props
+                    file.previewElement.addEventListener("click", function() {
+                        var thumbs = document.getElementsByClassName('dz-image-preview');
+
+                        for(var i =0; i < thumbs.length; i++) {
+                            thumbs[i].classList.remove('selected');
+                        }
+
+                        this.classList.add('selected');
+
+                       var found = uploadedFiles.find(function (item) {
+                            return (item.filename === file.name);
+                        })
+
+                       if( found ) {
+                            console.log(found.id);
+                            // ajax request - update main image selection
+                        }
+                    });
+                });
 
                 //Handle added file
                 this.on('success', function(file) {

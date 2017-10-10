@@ -8738,3 +8738,6 @@ button.close {
   }
 }
 
+.dz-image-preview.selected .dz-image {
+  border: 3px solid yellow;
+}
